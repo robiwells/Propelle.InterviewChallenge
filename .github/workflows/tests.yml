@@ -15,7 +15,7 @@ jobs:
         dotnet-version: [ '7.0.x']
     defaults:
       run:
-        working-directory: ./Propelle.InterviewChallenge/src/Propelle.InterviewChallenge.Tests
+        working-directory: ./src/Propelle.InterviewChallenge.Tests
 
     steps:
     - uses: actions/checkout@v3
