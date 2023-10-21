@@ -67,6 +67,37 @@ namespace Propelle.InterviewChallenge.Tests
             Assert.Equal(iterations, storedDeposits.Count);
         }
 
+        [Theory]
+        [InlineData(100)]
+        public async Task MakeDeposit_XTimesSuccessfully_ProcessedDepositsEqualStored(int iterations)
+        {
+            var client = _factory.CreateClient();
+            var requests = GenerateMakeDepositRequests(iterations);
+
+            foreach (var request in requests)
+            {
+                // Simulate a customer retrying a deposit if something goes wrong
+                await TryUntilSuccessful(
+                    () => client.POSTAsync<MakeDeposit.Endpoint, MakeDeposit.Request, MakeDeposit.Response>(request),
+                    x => x.Response.IsSuccessStatusCode);
+            }
+
+            // Assertions
+            using var scope = _factory.Services.CreateScope();
+
+            using var context = scope.ServiceProvider.GetService<PaymentsContext>();
+            var storedDeposits = await context.Deposits
+                .Where(x => requests.Select(x => x.UserId).Contains(x.UserId))
+                .ToListAsync();
+
+            var investrClient = scope.ServiceProvider.GetService<ISmartInvestClient>();
+            var sentDeposits = investrClient.SubmittedDeposits
+                .Where(x => requests.Select(x => x.UserId).Contains(x.UserId))
+                .ToList();
+
+            Assert.Equal(sentDeposits.Count, storedDeposits.Count);
+        }
+
         private static async Task<T> TryUntilSuccessful<T>(
             Func<Task<T>> @delegate,
             Func<T, bool> successCondition = null)
