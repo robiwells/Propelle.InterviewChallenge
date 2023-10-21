@@ -5,6 +5,10 @@ using Propelle.InterviewChallenge.Application.Domain.Events;
 using Propelle.InterviewChallenge.Application.EventBus;
 using Propelle.InterviewChallenge.Application.EventHandlers;
 using Propelle.InterviewChallenge.EventHandling;
+using Polly;
+using Polly.Retry;
+using Polly.Telemetry;
+using Propelle.InterviewChallenge.Application.Telemetry;
 
 namespace Propelle.InterviewChallenge
 {
@@ -21,6 +25,31 @@ namespace Propelle.InterviewChallenge
             builder.Services.AddSingleton<Application.EventBus.IEventBus, SimpleEventBus>();
             builder.Services.AddTransient<EventHandling.IEventHandler<DepositMade>, SubmitDeposit>();
             builder.Services.AddFastEndpoints();
+
+
+            // Retry pipeline service
+
+            // Setup logging for retries
+            var telemetryOptions = new TelemetryOptions
+            {
+                LoggerFactory = LoggerFactory.Create(builder => builder.AddConsole())
+            };
+            telemetryOptions.TelemetryListeners.Add(new SimpleTelemetryListener());
+
+            // Add retry service to service provider
+            builder.Services.AddResiliencePipeline(Constants.DefaultRetryPipelineID, builder =>
+            {
+                builder.AddRetry(new RetryStrategyOptions
+                    {
+                        ShouldHandle = new PredicateBuilder().Handle<TransientException>(),
+                        BackoffType = DelayBackoffType.Exponential,
+                        UseJitter = true,
+                        MaxRetryAttempts = 50, 
+                        Delay = TimeSpan.FromSeconds(0.0001), // Low base delay for testing, should increase if issue due to rate limiting
+                    })
+                    .AddTimeout(TimeSpan.FromSeconds(10))
+                    .ConfigureTelemetry(telemetryOptions);
+            });
 
             var app = builder.Build();
 

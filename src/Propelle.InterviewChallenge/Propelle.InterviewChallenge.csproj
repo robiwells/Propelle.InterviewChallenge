@@ -14,4 +14,12 @@
     <PackageReference Include="Polly.Extensions" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Application\Telemetry\" />
+    <None Remove="Application\Constants\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Application\Telemetry\" />
+    <Folder Include="Application\Constants\" />
+  </ItemGroup>
 </Project>
