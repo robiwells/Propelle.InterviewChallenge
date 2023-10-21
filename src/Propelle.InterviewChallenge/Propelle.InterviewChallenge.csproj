@@ -5,10 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
   <ItemGroup>
     <PackageReference Include="FastEndpoints" Version="5.18.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.12" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="7.0.12" />
+    <PackageReference Include="Polly.Core" Version="8.0.0" />
+    <PackageReference Include="Polly.Extensions" Version="8.0.0" />
   </ItemGroup>
 
 </Project>
